@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
     "id",
     "payload"
 })
-public class Example {
+public class RecrutieeResponse {
 
     @JsonProperty("attempt_count")
     public Integer attemptCount;
