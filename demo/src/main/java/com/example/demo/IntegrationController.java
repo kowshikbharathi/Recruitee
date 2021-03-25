@@ -22,11 +22,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
-@RequestMapping("/integration.com")
+@RequestMapping("/integration")
 public class IntegrationController {
 	
     @GetMapping("/api")
-    public CompletableFuture<Void> integrationByRecrutiee(@RequestBody RecrutieeResponse recrutieeResponse) throws URISyntaxException, UnsupportedEncodingException, JsonProcessingException {
+    public CompletableFuture<String> integrationByRecrutiee(@RequestBody RecrutieeResponse recrutieeResponse) throws URISyntaxException, UnsupportedEncodingException, JsonProcessingException {
         
         //Important
         Payload payload = recrutieeResponse.payload;
@@ -40,17 +40,16 @@ public class IntegrationController {
              put("Ideas2IT: DOJ in 15 days", "cam_Ko8yJWBrtLgqeFEod");
         }};
         
-       if(campaginMap.containsKey(campaginDOJ)) {
     	   //For Basic Authentication
     	   String auth =  ":f0777b800f62ebaf6e57b03d8ebb1887";
     	   byte[] encodedAuth = Base64.encodeBase64(auth.getBytes("UTF-8"));
     	   String authHeaderValue = "Basic " + new String(encodedAuth);
     	   String email = payload.getCandidate().emails.get(0);
         
+      if(campaginMap.containsKey(campaginDOJ)) {
     	   //API url formation
-    	   String urlFormed = "https://api.lemlist.com/api/campaigns/"+campaginMap.get(payload.details.toStage.name)+"/leads/";
-    	   urlFormed = urlFormed.concat(email);
-    	   URI uri = new URI(urlFormed);       
+    	   String url = "https://api.lemlist.com/api/campaigns/"+campaginMap.get(payload.details.toStage.name)+"/leads/"+ email;
+    	   URI uri = new URI(url);       
     	   ObjectMapper objectMapper = new ObjectMapper();
     	   //RequestBody
     	   Map<String,String>map=new HashMap<>();
@@ -71,13 +70,32 @@ public class IntegrationController {
     	   // Send HTTP request
     	   return  HttpClient.newHttpClient()
     			   .sendAsync(request, BodyHandlers.ofString())
-    			   .thenApply(HttpResponse::statusCode)
-    			   .thenAccept(System.out::println);
-	   
-    }
-       if(campaginDOJ.equals("Hired")) {
-	   
+    			   .thenApply(HttpResponse::body);		   	   
+      }
+      if(campaginDOJ.equals("Hired")) {
+    	   String url = "https://timesheet.ideas2it.com/api/on-boarding/recruitee";
+    	   URI uri = new URI(url);       
+    	   ObjectMapper objectMapper = new ObjectMapper();
+    	   //RequestBody
+    	   Map<String,String>map=new HashMap<>();
+    	   map.put("name", payload.getCandidate().name);
+    	   map.put("email", email);
+    	   String requestBody = objectMapper
+              .writerWithDefaultPrettyPrinter()
+              .writeValueAsString(map);
+
+    	   // Create HTTP request object
+    	   HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .POST((BodyPublishers.ofString(requestBody)))
+                .header("Content-Type", "application/json")
+                .header("accept", "application/json")
+                .build();
+    	   // Send HTTP request
+    	   return  HttpClient.newHttpClient()
+    			   .sendAsync(request, BodyHandlers.ofString())
+    			   .thenApply(HttpResponse::body);	   
        }
        return null;
-}
+  }
 }
